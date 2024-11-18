@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 )
 
 func main() {
@@ -14,8 +15,17 @@ func main() {
 	}
 
 	fmt.Println(filepath)
-	fmt.Println(GetLatestFile(filepath))
+	fileName, err := GetLatestFile(filepath)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
+	for {
+		printWholeFile(filepath + fileName)
+		ticker := time.NewTicker(100 * time.Millisecond)
+		<-ticker.C
+	}
 }
 
 // Config file
@@ -83,4 +93,16 @@ func GetLatestFile(dirpath string) (string, error) {
 		}
 	}
 	return newestFile.Name(), nil
+}
+
+func printWholeFile(filename string) error {
+
+	f, err := os.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(f))
+
+	return nil
 }
