@@ -8,24 +8,27 @@ import (
 )
 
 func main() {
-	filepath, err := GetpathFromConfig("flex")
-	if err != nil {
-		fmt.Println("Filepath not found in config file")
+	args := os.Args
+	amountArgs := len(args)
+	if amountArgs < 2 {
+		fmt.Println("usage: lovi <Name from config file>")
 		os.Exit(1)
 	}
 
-	fmt.Println(filepath)
-	fileName, err := GetLatestFile(filepath)
+	dirpath, err := GetpathFromConfig(args[1])
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("Config file does not contain %v", args[1])
 		os.Exit(1)
 	}
 
-	for {
-		printWholeFile(filepath + fileName)
-		ticker := time.NewTicker(100 * time.Millisecond)
-		<-ticker.C
+	fileName, err := GetLatestFile(dirpath)
+	if err != nil {
+		fmt.Print(err)
+		os.Exit(1)
 	}
+
+	loopPrintFile(dirpath + fileName)
+
 }
 
 // Config file
@@ -62,9 +65,9 @@ func GetpathFromConfig(name string) (string, error) {
 	}
 
 	return "", fmt.Errorf("filepath not found in config")
-
 }
 
+// Filesystem
 func GetLatestFile(dirpath string) (string, error) {
 
 	if len(dirpath) == 0 {
@@ -95,14 +98,27 @@ func GetLatestFile(dirpath string) (string, error) {
 	return newestFile.Name(), nil
 }
 
-func printWholeFile(filename string) error {
-
+func printFile(filename string, startAt int) (int, error) {
 	f, err := os.ReadFile(filename)
 	if err != nil {
-		return err
+		return 0, err
+	}
+	if len(f) < startAt+1 {
+		return len(f), nil
 	}
 
-	fmt.Println(string(f))
+	toPrint := f[startAt:]
 
-	return nil
+	fmt.Print(string(toPrint))
+
+	return len(f), nil
+}
+
+func loopPrintFile(filename string) error {
+	fileLength := 0
+	for {
+		fileLength, _ = printFile(filename, fileLength)
+		ticker := time.NewTicker(100 * time.Millisecond)
+		<-ticker.C
+	}
 }
