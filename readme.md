@@ -19,6 +19,7 @@ Ultimately, I decided to create something of my own with LoVi, which is just a c
 Create a `lovi.config` file in your user home directory
 
 Mac / Linux : `~/`
+
 Windows: `C:\Users\<username>\`
 
 The config file is in json format:
