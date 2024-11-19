@@ -19,9 +19,9 @@ Ultimately, I decided to create something of my own with LoVi, which is just sho
 # Usage
 Create a `lovi.config` file in your user home directory
 
-Mac / Linux : `~/`
+Mac / Linux : `~/lovi.config`
 
-Windows: `C:\Users\<username>\`
+Windows: `C:\Users\<username>\lovi.config`
 
 The config file is in json format:
 ```
