@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -17,7 +18,7 @@ func main() {
 
 	dirpath, err := GetpathFromConfig(args[1])
 	if err != nil {
-		fmt.Printf("Config file does not contain %v", args[1])
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
@@ -27,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	loopPrintFile(dirpath + fileName)
+	loopPrintFile(filepath.Join(dirpath, fileName))
 
 }
 
@@ -40,13 +41,13 @@ type config struct {
 }
 
 func GetpathFromConfig(name string) (string, error) {
-	configFileName := "/lovi.config"
+	configFileName := "lovi.config"
 	path, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
 
-	file := path + configFileName
+	file := filepath.Join(path, configFileName)
 	content, err := os.ReadFile(file)
 	if err != nil {
 		return "", err
@@ -64,7 +65,8 @@ func GetpathFromConfig(name string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("filepath not found in config")
+	return "", fmt.Errorf("Config file does not contain %v", name)
+
 }
 
 // Filesystem
