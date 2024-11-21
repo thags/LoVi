@@ -52,7 +52,6 @@ func main() {
 
 	for {
 		content := <-fileChan
-		fmt.Println("Content recieved")
 		fmt.Print(content)
 	}
 

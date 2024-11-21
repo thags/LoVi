@@ -63,7 +63,6 @@ func loopPrintFile(State *state, ch chan string) error {
 		content, _ := GetFileContent(State.currentFilePath, fileLength)
 		fileLength += len(content)
 		if len(content) > 0 {
-			fmt.Println("Content sent to channel")
 			ch <- content
 		}
 		ticker := time.NewTicker(100 * time.Millisecond)
