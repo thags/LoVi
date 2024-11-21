@@ -1,14 +1,19 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/mattn/go-tty"
 	"os"
 	"path/filepath"
-	"time"
 )
 
+type state struct {
+	conf            *config
+	currentFilePath string
+}
+
 func main() {
+	configFileName := "lovi.config"
 	args := os.Args
 	amountArgs := len(args)
 	if amountArgs < 2 {
@@ -16,111 +21,68 @@ func main() {
 		os.Exit(1)
 	}
 
-	dirpath, err := GetpathFromConfig(args[1])
+	var Config config
+	err := setConfigFromFile(&Config, configFileName)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	fileName, err := GetLatestFile(dirpath)
+	dirpath, err := Config.getPath(args[1])
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fileName, err := getLatestFile(dirpath)
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}
 
-	loopPrintFile(filepath.Join(dirpath, fileName))
-
-}
-
-// Config file
-type config struct {
-	Folders []struct {
-		Name     string `json:"name"`
-		Filepath string `json:"filepath"`
-	} `json:"folders"`
-}
-
-func GetpathFromConfig(name string) (string, error) {
-	configFileName := "lovi.config"
-	path, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
+	State := state{
+		conf:            &Config,
+		currentFilePath: filepath.Join(dirpath, fileName),
 	}
 
-	file := filepath.Join(path, configFileName)
-	content, err := os.ReadFile(file)
-	if err != nil {
-		return "", err
-	}
+	go handleUserKeyInput(&State)
 
-	var Config config
+	fileChan := make(chan string)
+	go loopPrintFile(&State, fileChan)
 
-	if err = json.Unmarshal(content, &Config); err != nil {
-		return "", err
-	}
-
-	for _, c := range Config.Folders {
-		if c.Name == name {
-			return c.Filepath, nil
-		}
-	}
-
-	return "", fmt.Errorf("Config file does not contain %v", name)
-
-}
-
-// Filesystem
-func GetLatestFile(dirpath string) (string, error) {
-
-	if len(dirpath) == 0 {
-		return "", fmt.Errorf("Path can not be empty")
-	}
-
-	dirs, err := os.ReadDir(dirpath)
-	if err != nil {
-		return "", err
-	}
-
-	var newestFile os.DirEntry
-	for _, dir := range dirs {
-		if dir.IsDir() {
-			continue
-		}
-
-		if newestFile == nil {
-			newestFile = dir
-		}
-
-		currentInfo, _ := dir.Info()
-		newestInfo, _ := newestFile.Info()
-		if currentInfo.ModTime().After(newestInfo.ModTime()) {
-			newestFile = dir
-		}
-	}
-	return newestFile.Name(), nil
-}
-
-func printFile(filename string, startAt int) (int, error) {
-	f, err := os.ReadFile(filename)
-	if err != nil {
-		return 0, err
-	}
-	if len(f) < startAt+1 {
-		return len(f), nil
-	}
-
-	toPrint := f[startAt:]
-
-	fmt.Print(string(toPrint))
-
-	return len(f), nil
-}
-
-func loopPrintFile(filename string) error {
-	fileLength := 0
 	for {
-		fileLength, _ = printFile(filename, fileLength)
-		ticker := time.NewTicker(100 * time.Millisecond)
-		<-ticker.C
+		content := <-fileChan
+		fmt.Println("Content recieved")
+		fmt.Print(content)
+	}
+
+}
+
+func handleUserKeyInput(State *state) {
+	tty, err := tty.Open()
+	if err != nil {
+	}
+	defer tty.Close()
+
+	for {
+		r, err := tty.ReadRune()
+		if err != nil {
+			continue
+
+		}
+		switch r {
+		case 'q':
+			os.Exit(0)
+		default:
+			path, err := State.conf.getPathFromHotkey(r)
+			if err != nil {
+				continue
+			}
+			file, err := getLatestFile(path)
+			if err != nil {
+				continue
+			}
+			State.currentFilePath = filepath.Join(path, file)
+		}
 	}
 }
