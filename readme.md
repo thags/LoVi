@@ -30,7 +30,8 @@ The config file is in json format:
 	[
 		{
 			"name":"<friendlyName>",
-			"filepath":"<Path to directory containing log files>" 
+			"filepath":"<Path to directory containing log files>",
+			"hotkey":"f"
 		}
 	]
 }
@@ -40,3 +41,12 @@ So a path would look like `C:\\Users\\Folder`
 
 Call lovi from the command line using `lovi <name from config file>` 
 This will open and tail the most recent file in the "filepath" for the given config "name".
+
+`hotkey` is optional.
+
+A hotkey will immediately switch to view / tail the related filepath from whichever file you are currently viewing.
+
+Reserved / Default Hotkeys:
+`q` : Exits LoVi
+
+
